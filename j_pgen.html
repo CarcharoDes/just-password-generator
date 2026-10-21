@@ -2,7 +2,7 @@
 
 <!--
     Application: Just Password Generator
-    Version: 0.3.2
+    Version: 0.3.3
     Authors: Nataliia Furs, Tymur Furs, Andrii Furs (https://carcharodes.github.io/just-password-generator/)
     License: MIT (https://opensource.org/license/mit)
     Description: Cryptographically secure, zero-tracking offline password generator.
@@ -66,11 +66,21 @@
 
         <button type="button" id="btn-generate" class="btn-main">Generate a password</button>
 
-        <section class="result-section">
+                <section class="result-section">
             <div class="result-container">
-                <input type="text" id="result-display" readonly placeholder="The password will go here...">
+
+                <input type="password" id="result-display" readonly placeholder="The password will go here...">
                 <button type="button" id="btn-copy">Copy</button>
             </div>
+
+            <div class="show-password-container" style="margin-top: 10px; margin-left: 20px;">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="chk-show-password" disabled>
+                    <span class="checkmark"></span>
+                    Show password
+                </label>
+            </div>
+
             <div id="copy-toast" class="toast-message">Copied</div>
         </section>
 
