@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCopy = document.getElementById('btn-copy');
     const copyToast = document.getElementById('copy-toast');
     const strengthBar = document.getElementById('strength-bar');
+    
+    const chkShowPassword = document.getElementById('chk-show-password');
 
     const CHARS = {
         uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -49,6 +51,14 @@ document.addEventListener('DOMContentLoaded', () => {
         element.addEventListener('change', validateControls);
     });
 
+    chkShowPassword.addEventListener('change', () => {
+        if (chkShowPassword.checked) {
+            resultDisplay.type = 'text';
+        } else {
+            resultDisplay.type = 'password';
+        }
+    });
+
     function validateControls() {
         const anyCheckboxChecked = chkUppercase.checked || chkLowercase.checked || chkNumbers.checked;
         const hasSpecialChars = specialCharsInput.value.length > 0;
@@ -61,14 +71,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getSecureRandomInt(max) {
+        if (max <= 0) return 0;
         const byteLength = 1;
         const randomArray = new Uint8Array(byteLength);
-        const maxRange = 256 - (256 % max);
+        
+        const safeMax = max > 256 ? 256 : max;
+        const maxRange = 256 - (256 % safeMax);
         
         while (true) {
             window.crypto.getRandomValues(randomArray);
             if (randomArray[0] < maxRange) {
-                return randomArray[0] % max;
+                return randomArray[0] % safeMax;
             }
         }
     }
@@ -83,27 +96,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function generatePassword() {
         const length = parseInt(lengthInput.value, 10);
-        let pool = '';
+        let rawPool = '';
         let guaranteedCharacters = [];
 
         if (chkUppercase.checked) {
-            pool += CHARS.uppercase;
+            rawPool += CHARS.uppercase;
             guaranteedCharacters.push(CHARS.uppercase[getSecureRandomInt(CHARS.uppercase.length)]);
         }
         if (chkLowercase.checked) {
-            pool += CHARS.lowercase;
+            rawPool += CHARS.lowercase;
             guaranteedCharacters.push(CHARS.lowercase[getSecureRandomInt(CHARS.lowercase.length)]);
         }
         if (chkNumbers.checked) {
-            pool += CHARS.numbers;
+            rawPool += CHARS.numbers;
             guaranteedCharacters.push(CHARS.numbers[getSecureRandomInt(CHARS.numbers.length)]);
         }
         
         const specialChars = specialCharsInput.value;
         if (specialChars.length > 0) {
-            pool += specialChars;
+            rawPool += specialChars;
             guaranteedCharacters.push(specialChars[getSecureRandomInt(specialChars.length)]);
         }
+
+        const uniquePool = [...new Set(rawPool)].join('');
 
         if (guaranteedCharacters.length > length) {
             guaranteedCharacters = guaranteedCharacters.slice(0, length);
@@ -111,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const remainingLength = length - guaranteedCharacters.length;
         for (let i = 0; i < remainingLength; i++) {
-            const randomIndex = getSecureRandomInt(pool.length);
-            guaranteedCharacters.push(pool[randomIndex]);
+            const randomIndex = getSecureRandomInt(uniquePool.length);
+            guaranteedCharacters.push(uniquePool[randomIndex]);
         }
 
         const shuffledPasswordArray = secureShuffle(guaranteedCharacters);
@@ -120,17 +135,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultDisplay.value = finalPassword;
 
-        updateStrengthBar(finalPassword, pool.length);
+        chkShowPassword.disabled = false;
+
+        updateStrengthBar(finalPassword, uniquePool.length);
     }
 
     function updateStrengthBar(password, poolSize) {
-        if (!password) {
+        if (!password || poolSize <= 1) {
             strengthBar.style.width = '0%';
             return;
         }
 
         const entropy = password.length * Math.log2(poolSize);
-        
         let percentage = Math.min((entropy / 100) * 100, 100);
         
         strengthBar.style.width = `${percentage}%`;
